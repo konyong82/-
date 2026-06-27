@@ -1,0 +1,6 @@
+{
+  "name": "비자친구 이건행정사 & 직업소개소",
+  "description": "외국인을 위한 전문 초청 및 체류 비자 업무, 사범심사, 직업 소개 전문 이건행정사사무소 & 직업소개소 웹사이트 및 AI 비자 카운셀러",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
