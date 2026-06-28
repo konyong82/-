@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { FileText, Briefcase, ArrowRight, UserCheck, Scale } from "lucide-react";
 
 interface ServicesProps {
@@ -10,7 +11,7 @@ interface ServicesProps {
 export default function Services({ onSelectAction, lang, setLang }: ServicesProps) {
   const translations = {
     ko: {
-      heading: "비자친구의 3대 핵심 전문 분야",
+      heading: "비자친구의 3대 핵심 분야",
       intro: "단순 행정 대행을 넘어 AI 정밀 분석과 구인 구직 연계를 결합한 차별화된 출입국 행정 솔루션을 제공합니다.",
       whyTitle: "💡 왜 출입국 서류는 '비자친구'와 상담해야 할까요?",
       whyDesc: "법무부 출입국 대행기관 정식 등록 및 공인 직업소개업 허가를 모두 소유하여, 외국인 인재의 비자 발급과 직업 매칭을 공인된 울타리 내에서 한 번에 해결합니다. 또한 최신 AI 심사 모델을 통해 불합격 요소를 선제 진단함으로써 불필요한 행정 수수료 낭비를 완벽히 차단합니다.",
@@ -305,10 +306,21 @@ export default function Services({ onSelectAction, lang, setLang }: ServicesProp
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-5">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.2
+            }}
+          >
             {activeContent.heading}
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+          </motion.h2>
 
           <div className="pt-2">
             <p className="text-slate-600 text-base sm:text-lg break-keep px-4 max-w-2xl mx-auto text-center font-medium leading-relaxed p-3 bg-blue-50/10 rounded-2xl">

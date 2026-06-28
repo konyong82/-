@@ -1,4 +1,4 @@
-import { Shield, Bot, HelpCircle, CheckSquare, Briefcase, FileText } from "lucide-react";
+import { Shield, Bot, HelpCircle, CheckSquare, Briefcase, FileText, Lock, Unlock } from "lucide-react";
 
 interface HeaderProps {
   activeSection: string;
@@ -6,9 +6,21 @@ interface HeaderProps {
   openChat: () => void;
   lang: "ko" | "en" | "ja" | "zh" | "vi";
   setLang: (lang: "ko" | "en" | "ja" | "zh" | "vi") => void;
+  isAdmin: boolean;
+  onLoginClick: () => void;
+  onLogoutClick: () => void;
 }
 
-export default function Header({ activeSection, setActiveSection, openChat, lang, setLang }: HeaderProps) {
+export default function Header({ 
+  activeSection, 
+  setActiveSection, 
+  openChat, 
+  lang, 
+  setLang,
+  isAdmin,
+  onLoginClick,
+  onLogoutClick
+}: HeaderProps) {
   const trans = {
     ko: {
       brandName: "비자친구",
@@ -87,23 +99,31 @@ export default function Header({ activeSection, setActiveSection, openChat, lang
           className="flex items-center gap-3 cursor-pointer group"
           id="logo-container"
         >
-          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-200 bg-[#7cb4c4] shrink-0">
+          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-200 bg-white border border-slate-100 shrink-0">
             <img 
-              src="/src/assets/images/visa_friend_logo_1782559736095.jpg" 
+              src="/src/assets/images/visa_friend_blue_mint_logo_1782662971714.jpg" 
               alt="비자친구 로고" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
           <div className="hidden sm:block">
-            <div className="flex items-center gap-2">
+            <div className="flex items-baseline gap-1.5">
               <span className="text-base lg:text-[13px] xl:text-lg font-bold tracking-tight text-slate-800 font-sans whitespace-nowrap">
-                {activeContent.brandName} <span className="text-blue-700 font-semibold text-xs lg:text-[10px] xl:text-sm">{activeContent.brandSub}</span>
+                {activeContent.brandName}
+              </span>
+              <span className="text-blue-700 font-semibold text-[10px] xl:text-xs">
+                {activeContent.brandSub}
               </span>
             </div>
-            <p className="text-[10px] lg:text-[8px] xl:text-[10px] text-slate-500 font-mono tracking-wider uppercase whitespace-nowrap">
-              Visa Friend Admin & Job Agency
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[9px] font-black tracking-widest text-[#0b7a75] font-mono bg-[#f0fdfa] px-1 py-0.5 rounded border border-[#ccfbf1] leading-none uppercase">
+                visa79
+              </span>
+              <p className="text-[9px] lg:text-[7px] xl:text-[9px] text-slate-400 font-mono tracking-wider uppercase whitespace-nowrap">
+                Visa Friend Admin & Job Agency
+              </p>
+            </div>
           </div>
         </div>
 
@@ -155,6 +175,29 @@ export default function Header({ activeSection, setActiveSection, openChat, lang
               </button>
             ))}
           </div>
+
+          {/* Administrative Portal Action */}
+          {isAdmin ? (
+            <button
+              onClick={onLogoutClick}
+              id="btn-admin-logout"
+              className="flex items-center gap-1 xl:gap-1.5 px-2.5 xl:px-3.5 py-1.5 xl:py-2 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 rounded-xl text-[11px] xl:text-xs font-extrabold cursor-pointer transition-all whitespace-nowrap"
+              title="대표 행정사 로그아웃"
+            >
+              <Unlock className="w-3 h-3 xl:w-3.5 xl:h-3.5 shrink-0 text-red-600" />
+              <span className="hidden sm:inline">로그아웃</span>
+            </button>
+          ) : (
+            <button
+              onClick={onLoginClick}
+              id="btn-admin-login"
+              className="flex items-center gap-1 xl:gap-1.5 px-2.5 xl:px-3.5 py-1.5 xl:py-2 border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-xl text-[11px] xl:text-xs font-extrabold cursor-pointer transition-all whitespace-nowrap"
+              title="대표 행정사 로그인"
+            >
+              <Lock className="w-3 h-3 xl:w-3.5 xl:h-3.5 text-slate-400 shrink-0" />
+              <span className="hidden sm:inline">행정사로그인</span>
+            </button>
+          )}
 
           <button
             onClick={openChat}

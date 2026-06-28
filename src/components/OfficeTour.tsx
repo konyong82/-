@@ -1,17 +1,19 @@
-import React, { useState, useRef, ChangeEvent } from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
+import { motion } from "motion/react";
 import { Briefcase, Eye, ShieldAlert, CheckCircle, MapPin, Compass, Clock, Car, Footprints, Upload, RotateCcw, Image as ImageIcon } from "lucide-react";
 
 interface OfficeTourProps {
   lang?: "ko" | "en" | "ja" | "zh" | "vi";
+  isAdmin?: boolean;
 }
 
-export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
+export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourProps) {
   const trans = {
     ko: {
       badge: "신뢰할 수 있는 전문 환경",
       titlePre: "비자친구",
-      titlePost: "이건행정사무소 전경 및 상담 공간",
-      desc: "비자친구 이건행정사사무소는 국가 공인 등록 법인으로서 의뢰인의 소중한 비자 자격 승인과 권리 구제를 위해 완벽히 세팅된 쾌적하고 투명한 오프라인 사무 환경을 운영하고 있습니다.",
+      titlePost: "이건행정사&직업소개소 상담 공간",
+      desc: "비자친구 이건행정사&직업소개소는 국가 공인 등록 법인으로서 의뢰인의 소중한 비자 자격 승인과 권리 구제를 위해 완벽히 세팅된 쾌적하고 투명한 오프라인 사무 환경을 운영하고 있습니다.",
       locTitle: "오시는 길 및 내방 안내",
       locHeading: "남산역 도보 10분 거리에 위치하여 내방이 편리합니다",
       locDesc: "사범심사 구제 상담, 비자 자격 변경을 위한 구비 서류 제출 등 대면 상담 및 수임 업무를 위해 방문하실 경우 아래의 오시는 길 및 운영 정보를 확인해 주십시오. (※ 대기 최소화를 위해 모든 방문은 사전 예약제입니다)",
@@ -121,6 +123,29 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
   });
   const [meetingFallbackUsed, setMeetingFallbackUsed] = useState(false);
 
+  // Fetch images from server on mount
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const res = await fetch("/api/office/images");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.deskImage) {
+            setDeskImage(data.deskImage);
+            localStorage.setItem("visa_friend_office_desk", data.deskImage);
+          }
+          if (data.meetingImage) {
+            setMeetingImage(data.meetingImage);
+            localStorage.setItem("visa_friend_office_meeting", data.meetingImage);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading remote office images:", err);
+      }
+    };
+    fetchImages();
+  }, []);
+
   const deskInputRef = useRef<HTMLInputElement>(null);
   const meetingInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,12 +163,14 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "desk" | "meeting") => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "desk" | "meeting") => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string;
+        
+        // Optimistic update
         if (type === "desk") {
           localStorage.setItem("visa_friend_office_desk", base64String);
           setDeskImage(base64String);
@@ -151,12 +178,29 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
           localStorage.setItem("visa_friend_office_meeting", base64String);
           setMeetingImage(base64String);
         }
+
+        try {
+          const token = localStorage.getItem("visa_friend_admin_token");
+          const res = await fetch("/api/office/images", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ type, base64: base64String })
+          });
+          if (!res.ok) {
+            console.error("Failed to upload image to server database");
+          }
+        } catch (err) {
+          console.error("Failed to upload image to server database:", err);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleReset = (type: "desk" | "meeting") => {
+  const handleReset = async (type: "desk" | "meeting") => {
     if (type === "desk") {
       localStorage.removeItem("visa_friend_office_desk");
       setDeskImage("/src/assets/images/office_workspace_edited_1782559416311.jpg");
@@ -165,6 +209,18 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
       localStorage.removeItem("visa_friend_office_meeting");
       setMeetingImage("/src/assets/images/office_meeting_edited_1782559431521.jpg");
       setMeetingFallbackUsed(false);
+    }
+
+    try {
+      const token = localStorage.getItem("visa_friend_admin_token");
+      await fetch(`/api/office/images/${type}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+    } catch (err) {
+      console.error("Failed to delete image on server:", err);
     }
   };
 
@@ -213,10 +269,21 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
             <Briefcase className="w-3.5 h-3.5 text-blue-700" />
             {activeContent.badge}
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.6
+            }}
+          >
             {activeContent.titlePre} <span className="text-blue-800">{activeContent.titlePost}</span>
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+          </motion.h2>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
             {activeContent.desc}
           </p>
@@ -247,31 +314,35 @@ export default function OfficeTour({ lang = "ko" }: OfficeTourProps) {
 
                 {/* Micro hover indicator / Action Buttons */}
                 <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                  {/* File Upload Hidden Input */}
-                  <input 
-                    type="file" 
-                    ref={space.inputRef} 
-                    onChange={(e) => handleFileUpload(e, space.type)} 
-                    accept="image/*" 
-                    className="hidden" 
-                  />
-                  <button 
-                    onClick={() => space.inputRef.current?.click()}
-                    className="bg-blue-600 hover:bg-blue-500 text-white backdrop-blur-sm px-3 py-1.5 rounded-xl border border-blue-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-                    title="실제 사진 업로드"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    실제사진 넣기
-                  </button>
+                  {isAdmin && (
+                    <>
+                      {/* File Upload Hidden Input */}
+                      <input 
+                        type="file" 
+                        ref={space.inputRef} 
+                        onChange={(e) => handleFileUpload(e, space.type)} 
+                        accept="image/*" 
+                        className="hidden" 
+                      />
+                      <button 
+                        onClick={() => space.inputRef.current?.click()}
+                        className="bg-blue-600 hover:bg-blue-500 text-white backdrop-blur-sm px-3 py-1.5 rounded-xl border border-blue-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                        title="실제 사진 업로드"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        실제사진 넣기
+                      </button>
 
-                  {localStorage.getItem(`visa_friend_office_${space.type}`) && (
-                    <button 
-                      onClick={() => handleReset(space.type)}
-                      className="bg-slate-800/80 hover:bg-slate-700 text-slate-200 backdrop-blur-sm p-1.5 rounded-xl border border-white/10 text-xs font-bold transition-all shadow-md cursor-pointer"
-                      title="기본 이미지로 복원"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
+                      {(localStorage.getItem(`visa_friend_office_${space.type}`) || space.image.startsWith("data:")) && (
+                        <button 
+                          onClick={() => handleReset(space.type)}
+                          className="bg-slate-800/80 hover:bg-slate-700 text-slate-200 backdrop-blur-sm p-1.5 rounded-xl border border-white/10 text-xs font-bold transition-all shadow-md cursor-pointer"
+                          title="기본 이미지로 복원"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </>
                   )}
                   
                   <div className="bg-slate-900/70 backdrop-blur-sm px-2.5 py-1.5 rounded-xl border border-white/10 text-[10px] text-slate-300 font-semibold flex items-center gap-1">

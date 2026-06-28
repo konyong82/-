@@ -1,12 +1,14 @@
 import { useState, useEffect, FormEvent } from "react";
+import { motion } from "motion/react";
 import { Award, Search, Sparkles, Filter, Plus, CheckCircle2, UserCheck, RefreshCw, FileText, Globe } from "lucide-react";
 import { SuccessCase } from "../types";
 
 interface SuccessCasesSectionProps {
   lang?: "ko" | "en" | "ja" | "zh" | "vi";
+  isAdmin?: boolean;
 }
 
-export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSectionProps) {
+export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: SuccessCasesSectionProps) {
   const [cases, setCases] = useState<SuccessCase[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -17,7 +19,7 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
     ko: {
       badge: "증명된 행정 전문 실무",
       titlePre: "비자친구",
-      titlePost: "허가 및 구제 성공 사례",
+      titlePost: "성공 사례",
       desc: "어려운 불합격 처분 보완, 까다로운 기업 실사 승인, 긴급 출국 정지 명령 구제 등 실제 의뢰인들과 함께 이뤄낸 자랑스러운 허가 사례와 관서 허가 내역들을 투명하게 나열합니다.",
       cats: {
         all: "전체 성공사례",
@@ -133,10 +135,14 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
     }
 
     try {
+      const token = localStorage.getItem("visa_friend_admin_token");
       const finalImage = newImageUrl || "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=400";
       const res = await fetch("/api/cases", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           title: newTitle,
           category: newCategory,
@@ -162,6 +168,8 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
           setNewImageUrl("");
           fetchCases(true); // Quiet reload
         }, 1500);
+      } else {
+        alert("성공 사례 등록 권한이 없거나 실패했습니다.");
       }
     } catch (e) {
       console.error(e);
@@ -191,10 +199,21 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
             <Award className="w-3.5 h-3.5 text-blue-700" />
             {activeContent.badge}
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.4
+            }}
+          >
             {activeContent.titlePre} <span className="text-blue-800">{activeContent.titlePost}</span>
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+          </motion.h2>
           <p className="text-slate-600 text-sm sm:text-base">
             {activeContent.desc}
           </p>
@@ -242,13 +261,15 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-900" : ""}`} />
             </button>
 
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer shrink-0 transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              사례 등록
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer shrink-0 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                사례 등록
+              </button>
+            )}
           </div>
 
         </div>
@@ -423,7 +444,7 @@ export default function SuccessCasesSection({ lang = "ko" }: SuccessCasesSection
                 100% { transform: translateY(calc(-50% - 16px)); }
               }
               .animate-marquee-up {
-                animation: marqueeUp 40s linear infinite;
+                animation: marqueeUp 24s linear infinite;
               }
               .animate-marquee-up:hover {
                 animation-play-state: paused;

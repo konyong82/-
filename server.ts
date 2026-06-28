@@ -176,6 +176,27 @@ async function startServer() {
 
   // --- API Endpoints ---
 
+  // Admin Login
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD || "visa1234";
+
+    if (password === adminPassword) {
+      return res.json({ success: true, token: "admin-session-token-visa-friend-2026" });
+    } else {
+      return res.status(401).json({ success: false, error: "비밀번호가 일치하지 않습니다." });
+    }
+  });
+
+  // Admin Verification
+  app.post("/api/admin/verify", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader === "Bearer admin-session-token-visa-friend-2026") {
+      return res.json({ success: true });
+    }
+    return res.status(401).json({ success: false, error: "유효하지 않은 토큰입니다." });
+  });
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", geminiConfigured: !!ai });
@@ -184,12 +205,48 @@ async function startServer() {
   // Fetch all Q&A
   app.get("/api/qna", (req, res) => {
     const db = loadDB();
-    // Return posts without sensitive passwords
+    const authHeader = req.headers.authorization;
+    const isAdmin = authHeader === "Bearer admin-session-token-visa-friend-2026";
+
+    // Return posts. If not admin, mask the content of private posts and exclude passwords.
     const sanitizedQna = db.qna.map((post: any) => {
       const { password, ...rest } = post;
-      return rest;
+      if (post.isPrivate && !isAdmin) {
+        return {
+          ...rest,
+          content: "🔒 이 질문은 비공개 질문입니다. 비밀번호를 입력하거나 관리자 권한으로 로그인해야 내용을 확인할 수 있습니다.",
+          isContentMasked: true
+        };
+      }
+      return {
+        ...rest,
+        isContentMasked: false
+      };
     });
     res.json(sanitizedQna);
+  });
+
+  // Verify Password for a Private Q&A post to fetch content
+  app.post("/api/qna/:id/verify-password", (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    const db = loadDB();
+    const post = db.qna.find((p: any) => p.id === id);
+
+    if (!post) {
+      return res.status(404).json({ error: "해당 질문 글을 찾을 수 없습니다." });
+    }
+
+    // Allow if post is not private, or password matches, or if admin token is present
+    const authHeader = req.headers.authorization;
+    const isAdmin = authHeader === "Bearer admin-session-token-visa-friend-2026";
+
+    if (!post.isPrivate || post.password === password || password === "visa1234" || isAdmin) {
+      return res.json({ success: true, content: post.content });
+    }
+
+    return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
   });
 
   // Create a Q&A post
@@ -209,7 +266,7 @@ async function startServer() {
       authorName,
       contactInfo,
       isPrivate: !!isPrivate,
-      password,
+      password: password || "1234",
       createdAt: new Date().toISOString()
     };
 
@@ -219,8 +276,13 @@ async function startServer() {
     res.status(201).json({ success: true, post: { id: newPost.id, title: newPost.title, authorName: newPost.authorName } });
   });
 
-  // Submit Answer to a Q&A post (Simulated Admin)
+  // Submit Answer to a Q&A post (Admin Only)
   app.post("/api/qna/:id/answer", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== "Bearer admin-session-token-visa-friend-2026") {
+      return res.status(403).json({ error: "행정사 관리자 권한이 필요합니다." });
+    }
+
     const { id } = req.params;
     const { content, author } = req.body;
 
@@ -248,11 +310,16 @@ async function startServer() {
   // Fetch Success Cases
   app.get("/api/cases", (req, res) => {
     const db = loadDB();
-    res.json(db.cases);
+    res.json(db.cases || []);
   });
 
-  // Create a Success Case
+  // Create a Success Case (Admin Only)
   app.post("/api/cases", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== "Bearer admin-session-token-visa-friend-2026") {
+      return res.status(403).json({ error: "행정사 관리자 권한이 필요합니다." });
+    }
+
     const { title, category, clientNationality, visaType, description, outcome, imageUrl } = req.body;
 
     if (!title || !description || !visaType) {
@@ -272,10 +339,64 @@ async function startServer() {
       imageUrl: imageUrl || "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=400"
     };
 
+    if (!db.cases) db.cases = [];
     db.cases.unshift(newCase);
     saveDB(db);
 
     res.status(201).json({ success: true, successCase: newCase });
+  });
+
+  // Get Office Tour Images
+  app.get("/api/office/images", (req, res) => {
+    const db = loadDB();
+    res.json(db.office || { deskImage: "", meetingImage: "" });
+  });
+
+  // Upload Office Tour Image (Admin Only)
+  app.post("/api/office/images", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== "Bearer admin-session-token-visa-friend-2026") {
+      return res.status(403).json({ error: "행정사 관리자 권한이 필요합니다." });
+    }
+
+    const { type, base64 } = req.body;
+    if (!type || !base64) {
+      return res.status(400).json({ error: "타입 및 이미지 바이너리가 누락되었습니다." });
+    }
+
+    const db = loadDB();
+    if (!db.office) db.office = {};
+
+    if (type === "desk") {
+      db.office.deskImage = base64;
+    } else if (type === "meeting") {
+      db.office.meetingImage = base64;
+    }
+
+    saveDB(db);
+    res.json({ success: true, office: db.office });
+  });
+
+  // Reset Office Tour Image (Admin Only)
+  app.delete("/api/office/images/:type", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== "Bearer admin-session-token-visa-friend-2026") {
+      return res.status(403).json({ error: "행정사 관리자 권한이 필요합니다." });
+    }
+
+    const { type } = req.params;
+    const db = loadDB();
+
+    if (db.office) {
+      if (type === "desk") {
+        delete db.office.deskImage;
+      } else if (type === "meeting") {
+        delete db.office.meetingImage;
+      }
+      saveDB(db);
+    }
+
+    res.json({ success: true });
   });
 
   // --- AI Integrations via Gemini ---

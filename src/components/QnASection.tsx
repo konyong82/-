@@ -1,12 +1,14 @@
 import { useState, useEffect, FormEvent } from "react";
-import { HelpCircle, Search, MessageSquare, Lock, Unlock, Plus, AlertCircle, RefreshCw, ChevronDown, ChevronUp, CheckCircle, UserCheck } from "lucide-react";
+import { motion } from "motion/react";
+import { HelpCircle, Search, MessageSquare, Lock, Unlock, Plus, AlertCircle, RefreshCw, ChevronDown, ChevronUp, CheckCircle, UserCheck, ShieldAlert } from "lucide-react";
 import { QnAPost } from "../types";
 
 interface QnASectionProps {
   lang?: "ko" | "en" | "ja" | "zh" | "vi";
+  isAdmin?: boolean;
 }
 
-export default function QnASection({ lang = "ko" }: QnASectionProps) {
+export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionProps) {
   const [posts, setPosts] = useState<QnAPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -112,7 +114,12 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
     if (!quiet) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const res = await fetch("/api/qna");
+      const token = localStorage.getItem("visa_friend_admin_token");
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch("/api/qna", { headers });
       if (res.ok) {
         const data = await res.json();
         setPosts(data);
@@ -127,9 +134,29 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
 
   useEffect(() => {
     fetchPosts();
+  }, [isAdmin]);
+
+  useEffect(() => {
+    const handleOpenQnaForm = () => {
+      setShowAddForm(true);
+    };
+    window.addEventListener("open-qna-form", handleOpenQnaForm);
+    return () => {
+      window.removeEventListener("open-qna-form", handleOpenQnaForm);
+    };
   }, []);
 
   const handleToggleExpand = (post: QnAPost) => {
+    if (isAdmin) {
+      // Admin bypasses private post password checks completely!
+      if (expandedPostIds.includes(post.id)) {
+        setExpandedPostIds(prev => prev.filter(id => id !== post.id));
+      } else {
+        setExpandedPostIds(prev => [...prev, post.id]);
+      }
+      return;
+    }
+
     if (post.isPrivate && !unlockedPostIds.includes(post.id)) {
       // Trigger password prompt
       setPasswordPromptPostId(post.id);
@@ -144,15 +171,27 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
     }
   };
 
-  const handlePasswordSubmit = (postId: string) => {
-    const post = posts.find(p => p.id === postId);
-    if (post) {
-      // For demonstration / backend prototype: since we sanitized password in GET,
-      // any 4-digit password (or '1234') will unlock or we simulate unlocking.
-      // If they set a password during their session, it can be unlocked. Let's just simulate approval.
-      setUnlockedPostIds(prev => [...prev, postId]);
-      setExpandedPostIds(prev => [...prev, postId]);
-      setPasswordPromptPostId(null);
+  const handlePasswordSubmit = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/qna/${postId}/verify-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: enteredPassword })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Server returns unmasked content upon valid password verification.
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: data.content, isContentMasked: false } : p));
+        setUnlockedPostIds(prev => [...prev, postId]);
+        setExpandedPostIds(prev => [...prev, postId]);
+        setPasswordPromptPostId(null);
+        setEnteredPassword("");
+      } else {
+        alert("비밀번호가 올바르지 않습니다.");
+      }
+    } catch (err) {
+      console.error("Error verifying password:", err);
+      alert("비밀번호 검증 중 오류가 발생했습니다.");
     }
   };
 
@@ -206,9 +245,13 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
     }
 
     try {
+      const token = localStorage.getItem("visa_friend_admin_token");
       const res = await fetch(`/api/qna/${postId}/answer`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           content: adminAnswerText,
           author: "대표 행정사 이건"
@@ -219,6 +262,8 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
         setAdminAnswerText("");
         setReplyingPostId(null);
         fetchPosts(true); // Quiet refresh
+      } else {
+        alert("답변 등록 권한이 없거나 실패했습니다.");
       }
     } catch (e) {
       console.error(e);
@@ -243,10 +288,21 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.8
+            }}
+          >
             {activeContent.titlePre} <span className="text-blue-800">{activeContent.titlePost}</span>
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+          </motion.h2>
           <p className="text-slate-600 text-sm sm:text-base">
             {activeContent.desc}
           </p>
@@ -594,20 +650,20 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
                             {post.answer.content}
                           </p>
                         </div>
-                      ) : (
-                        /* Admin answering simulator for test playground */
-                        <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-xl space-y-3">
-                          <div className="flex items-center gap-1.5 text-xs text-amber-800 font-bold">
-                            <AlertCircle className="w-4 h-4" />
-                            <span>행정사 답변 등록 시뮬레이터 (관리자 대리 체험)</span>
+                      ) : isAdmin ? (
+                        /* Admin answering interface */
+                        <div className="p-4 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-3">
+                          <div className="flex items-center gap-1.5 text-xs text-blue-900 font-extrabold">
+                            <ShieldAlert className="w-4 h-4 text-blue-800" />
+                            <span>대표 행정사 마스터 관리 권한: 답변 작성</span>
                           </div>
                           {replyingPostId === post.id ? (
                             <div className="space-y-2">
                               <textarea
                                 value={adminAnswerText}
                                 onChange={(e) => setAdminAnswerText(e.target.value)}
-                                placeholder="행정사 대행 답변 내용을 친절히 기입해 주십시오..."
-                                rows={3}
+                                placeholder="의뢰인의 상황에 부합하는 정밀하고 따뜻한 해결책을 기입해 주십시오..."
+                                rows={4}
                                 className="w-full bg-white p-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-900 focus:outline-none"
                               ></textarea>
                               <div className="flex gap-2 justify-end">
@@ -631,11 +687,17 @@ export default function QnASection({ lang = "ko" }: QnASectionProps) {
                           ) : (
                             <button
                               onClick={() => setReplyingPostId(post.id)}
-                              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
+                              className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
                             >
                               대표 행정사 권한으로 즉시 답변 달기
                             </button>
                           )}
+                        </div>
+                      ) : (
+                        /* Standard visitor view when unanswered */
+                        <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-xl flex items-center gap-2.5 text-xs text-amber-800 font-bold">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                          <span>대표 행정사의 전문 법률 검토 및 맞춤 답변이 현재 분석 중입니다. (24시간 이내 등록 완료 예정)</span>
                         </div>
                       )}
 

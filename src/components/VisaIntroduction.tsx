@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "motion/react";
 import { FileText, ArrowUpRight, Search, CheckCircle, ShieldCheck, HelpCircle, ExternalLink, Globe } from "lucide-react";
 
 interface VisaIntroductionProps {
@@ -10,7 +11,7 @@ export default function VisaIntroduction({ lang = "ko" }: VisaIntroductionProps)
     ko: {
       badge: "출입국 공식 등록 대행기관 제공",
       titlePre: "신뢰할 수 있는",
-      titlePost: "대한민국 대표 비자 가이드",
+      titlePost: "비자 가이드",
       desc: "비자친구 이건행정사가 법무부 출입국 규정을 분석하여 핵심 자격 요건을 알기 쉽게 정리해 드립니다. 비자 아이콘을 누르시면 대표 행정사가 분석한 Naver 블로그의 정밀 상세 실무 포스팅으로 즉시 연결됩니다.",
       actionBtn: "상세 블로그 분석 및 성공사례 보기",
       searchPlaceholder: "비자 코드 검색 (예: E-7, F-2-R)...",
@@ -469,10 +470,21 @@ export default function VisaIntroduction({ lang = "ko" }: VisaIntroductionProps)
             <ShieldCheck className="w-3.5 h-3.5 text-blue-800 animate-pulse" />
             {activeContent.badge}
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.3
+            }}
+          >
             {activeContent.titlePre} <span className="text-blue-800">{activeContent.titlePost}</span>
-          </h2>
-          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+          </motion.h2>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed break-keep">
             {activeContent.desc}
           </p>
@@ -558,7 +570,7 @@ export default function VisaIntroduction({ lang = "ko" }: VisaIntroductionProps)
                 <span className="text-[11px] font-bold text-slate-400 block mb-2 uppercase tracking-wider">
                   {activeContent.requirements}
                 </span>
-                <ul className="space-y-1.5 mb-5">
+                <ul className="space-y-1.5 mb-0">
                   {visa.tags.map((tag, i) => (
                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -566,12 +578,6 @@ export default function VisaIntroduction({ lang = "ko" }: VisaIntroductionProps)
                     </li>
                   ))}
                 </ul>
-
-                {/* Bottom Action Indicator */}
-                <div className="flex items-center justify-between text-xs font-bold text-blue-900 group-hover:text-blue-700 pt-2 border-t border-slate-50">
-                  <span>{activeContent.actionBtn}</span>
-                  <ArrowUpRight className="w-4 h-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </div>
               </div>
             </div>
           ))}

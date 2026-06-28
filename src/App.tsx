@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Services from "./components/Services";
@@ -7,15 +7,55 @@ import AIVisaMatcher from "./components/AIVisaMatcher";
 import SuccessCasesSection from "./components/SuccessCasesSection";
 import OfficeTour from "./components/OfficeTour";
 import QnASection from "./components/QnASection";
-import Footer from "./components/Footer";
+import Footer from "./components/Footer"
 import AICounselor from "./components/AICounselor";
-import { MessageSquare, Bot, Phone, ShieldCheck, Star } from "lucide-react";
+import { MessageSquare, Bot, Phone, ShieldCheck, Star, Lock, Unlock, Key, X } from "lucide-react";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("hero");
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [backendStatus, setBackendStatus] = useState({ ok: false, gemini: false });
   const [lang, setLang] = useState<"ko" | "en" | "ja" | "zh" | "vi">("ko");
+
+  // Admin states
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem("visa_friend_admin_token") === "admin-session-token-visa-friend-2026";
+  });
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: loginPassword })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.setItem("visa_friend_admin_token", data.token);
+        setIsAdmin(true);
+        setShowLoginModal(false);
+        setLoginPassword("");
+        // Reload page or quiet refresh to apply permissions securely
+        window.location.reload();
+      } else {
+        setLoginError(data.error || "비밀번호가 일치하지 않습니다.");
+      }
+    } catch (err) {
+      setLoginError("서버와의 연결에 실패했습니다.");
+    }
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem("visa_friend_admin_token");
+    setIsAdmin(false);
+    // Reload page or quiet refresh to clear memory securely
+    window.location.reload();
+  };
 
   const infoTrans = {
     ko: {
@@ -84,6 +124,9 @@ export default function App() {
         openChat={() => setIsChatOpen(true)}
         lang={lang}
         setLang={setLang}
+        isAdmin={isAdmin}
+        onLoginClick={() => setShowLoginModal(true)}
+        onLogoutClick={handleAdminLogout}
       />
 
       {/* Main Content Sections (Landing page layout) */}
@@ -104,12 +147,26 @@ export default function App() {
               <ShieldCheck className="w-4 h-4 text-blue-900 shrink-0" />
               <span>{activeInfo.qual}</span>
             </div>
-            <div className="flex items-center gap-2 bg-blue-100/60 border border-blue-200/50 px-3 py-1 rounded-full text-blue-900 text-[11px] font-bold shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-              <span>{activeInfo.rate}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdmin && (
+                <div className="flex items-center gap-1.5 bg-blue-900 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-wider animate-pulse shadow-sm">
+                  <Lock className="w-3 h-3" />
+                  <span>대표행정사 관리 모드 활성화</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-blue-100/60 border border-blue-200/50 px-3 py-1 rounded-full text-blue-900 text-[11px] font-bold shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span>{activeInfo.rate}</span>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Photo Gallery of Successful Cases - 2nd Section */}
+        <SuccessCasesSection lang={lang} isAdmin={isAdmin} />
+
+        {/* Interactive Q&A Consultation Room - 3rd Section */}
+        <QnASection lang={lang} isAdmin={isAdmin} />
 
         {/* 3 Core Specialty Services */}
         <Services onSelectAction={handleSectionChange} lang={lang} setLang={setLang} />
@@ -120,14 +177,8 @@ export default function App() {
         {/* AI Visa Eligibility Matching / Score Predictor wizard */}
         <AIVisaMatcher lang={lang} />
 
-        {/* Photo Gallery of Successful Cases */}
-        <SuccessCasesSection lang={lang} />
-
         {/* Real Administrative Office View & Tour Section */}
-        <OfficeTour lang={lang} />
-
-        {/* Interactive Q&A Consultation Room */}
-        <QnASection lang={lang} />
+        <OfficeTour lang={lang} isAdmin={isAdmin} />
 
       </main>
 
@@ -166,6 +217,86 @@ export default function App() {
 
       {/* AI Counselor Popup Chat Overlay */}
       <AICounselor isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} lang={lang} />
+
+      {/* --- ADMINISTRATIVE LOGIN MODAL --- */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 text-left relative overflow-hidden">
+            {/* Design accents */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-950 via-blue-800 to-sky-600"></div>
+            
+            <button
+              onClick={() => {
+                setShowLoginModal(false);
+                setLoginPassword("");
+                setLoginError("");
+              }}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shadow-inner">
+                  <Key className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-slate-900">대표 행정사 인증</h3>
+                  <p className="text-xs text-slate-500">이건행정사&직업소개소 관리 권한 검증</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-600 leading-relaxed">
+                행정사님만 로그인할 수 있는 공간입니다. 로그인 성공 시 <strong className="text-blue-900">성공 사례 업로드</strong>, <strong className="text-blue-900">상담실 비공개 글 즉시 열람 및 답변 등록</strong>, <strong className="text-blue-900">사무실 실제 사진 교체</strong> 권한이 활성화됩니다.
+                <div className="mt-2 text-[11px] font-semibold text-slate-500">
+                  💡 임시 비밀번호: <code className="bg-slate-200 px-1 py-0.5 rounded text-blue-900 font-bold">visa1234</code>
+                </div>
+              </div>
+
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">행정사 마스터 비밀번호</label>
+                  <input
+                    type="password"
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="비밀번호를 입력해 주세요."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition-all"
+                  />
+                </div>
+
+                {loginError && (
+                  <p className="text-xs text-red-600 font-semibold bg-red-50 p-3 rounded-lg border border-red-100">
+                    ⚠️ {loginError}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLoginModal(false);
+                      setLoginPassword("");
+                      setLoginError("");
+                    }}
+                    className="flex-1 py-3 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all cursor-pointer"
+                  >
+                    닫기
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+                  >
+                    인증 및 로그인
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,4 +1,6 @@
-import { Shield, Sparkles, CheckCircle2, ArrowRight, Bot } from "lucide-react";
+import { motion } from "motion/react";
+import { Shield, Sparkles, CheckCircle2, ArrowRight, Bot, MessageSquare } from "lucide-react";
+import Globe from "./Globe";
 
 interface HeroProps {
   setActiveSection: (section: string) => void;
@@ -99,11 +101,37 @@ export default function Hero({ setActiveSection, openChat, lang, setLang }: Hero
   const activeContent = trans[lang] || trans.ko;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 py-16 lg:py-24 text-white">
-      {/* Visual background accents */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500 blur-3xl"></div>
-        <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-sky-500 blur-3xl"></div>
+    <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 py-16 lg:py-24 text-white">
+      {/* Visual background image with restrained opacity suitable for a professional law/administrative office */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-[0.12] pointer-events-none mix-blend-luminosity transition-opacity duration-1000"
+        style={{ 
+          backgroundImage: "url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1920&q=80')" 
+        }} 
+      />
+
+      {/* Visual background accents with restrained patterns */}
+      <div className="absolute inset-0 opacity-15 pointer-events-none">
+        {/* Soft glowing ambient orbs */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl"></div>
+        <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-sky-500/20 blur-3xl"></div>
+        
+        {/* Fine professional dot grid */}
+        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        
+        {/* Elegant structural thin lines reflecting order, trust, and legal precision */}
+        <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <pattern id="legal-grid" width="160" height="160" patternUnits="userSpaceOnUse">
+              <path d="M 160 0 L 0 0 0 160" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#legal-grid)" />
+          
+          {/* Abstract elegant thin diagonal line symbolizing path & solution */}
+          <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.75" />
+          <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="0.5" />
+        </svg>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -116,13 +144,24 @@ export default function Hero({ setActiveSection, openChat, lang, setLang }: Hero
               {activeContent.badge}
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+            <motion.h1 
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight cursor-default"
+              animate={{ 
+                scale: [1, 1.01, 1],
+                opacity: [1, 0.6, 1]
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 3,
+                ease: "easeInOut"
+              }}
+            >
               {activeContent.titlePre} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-400">
                 {activeContent.brandName}
               </span>
               {activeContent.titlePost}
-            </h1>
+            </motion.h1>
 
             <p className="text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed">
               {activeContent.desc}
@@ -179,41 +218,56 @@ export default function Hero({ setActiveSection, openChat, lang, setLang }: Hero
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-4 sm:items-center">
+              <button
+                onClick={() => {
+                  setActiveSection("qna");
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent("open-qna-form"));
+                  }, 300);
+                }}
+                id="hero-cta-qna"
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold tracking-tight shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all duration-200 cursor-pointer whitespace-nowrap"
+              >
+                <MessageSquare className="w-5 h-5 animate-pulse shrink-0" />
+                <span className="whitespace-nowrap">
+                  {lang === "ko" && "실시간 Q&A 질문하기"}
+                  {lang === "en" && "Ask Real-time Q&A"}
+                  {lang === "ja" && "リアルタイムQ&Aで質問する"}
+                  {lang === "zh" && "实时 Q&A 提问"}
+                  {lang === "vi" && "Hỏi đáp Q&A thời gian thực"}
+                </span>
+              </button>
+
               <button
                 onClick={() => setActiveSection("ai-match")}
                 id="hero-cta-aimatch"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-slate-900 font-bold tracking-tight shadow-lg shadow-sky-500/20 hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-200 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-slate-900 font-bold tracking-tight shadow-lg shadow-sky-500/20 hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-200 cursor-pointer whitespace-nowrap"
               >
-                <Bot className="w-5 h-5 animate-bounce" />
-                {activeContent.ctaMatch}
-                <ArrowRight className="w-4 h-4" />
+                <Bot className="w-5 h-5 animate-bounce shrink-0" />
+                <span className="whitespace-nowrap">{activeContent.ctaMatch}</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
               
               <button
                 onClick={openChat}
                 id="hero-cta-chat"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700/90 border border-slate-700 text-white font-semibold transition-all duration-200 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700/90 border border-slate-700 text-white font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap"
               >
-                {activeContent.ctaChat}
+                <span className="whitespace-nowrap">{activeContent.ctaChat}</span>
               </button>
             </div>
           </div>
 
-          {/* Spline Design Integration */}
-          <div className="lg:col-span-5 h-[350px] sm:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 relative bg-slate-950">
-            {/* The user-provided Spline iframe */}
-            <iframe 
-              src="https://my.spline.design/glassknotvortex-QMrMNfJ0ZpLqj77n1deks2Hk/" 
-              frameBorder="0" 
-              width="100%" 
-              height="100%"
-              className="absolute inset-0 w-full h-full scale-[1.02] hover:scale-105 transition-transform duration-500"
-              title="Glass Knot Vortex"
-            ></iframe>
+          {/* 3D Rotating Interactive Globe Integration */}
+          <div className="lg:col-span-5 h-[350px] sm:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl border border-slate-800 relative bg-slate-950 flex items-center justify-center">
+            {/* The custom 3D interactive Globe component */}
+            <div className="absolute inset-0 w-full h-full">
+              <Globe />
+            </div>
             
             {/* Overlay indicators to make it look highly professional */}
-            <div className="absolute bottom-4 left-4 right-4 bg-slate-900/85 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left">
+            <div className="absolute bottom-4 left-4 right-4 bg-slate-900/85 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left z-10">
               <div className="pointer-events-none">
                 <p className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>

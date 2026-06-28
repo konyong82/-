@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Bot, Sparkles, AlertCircle, FileText, CheckCircle, Award, ArrowRight, Loader2, HelpCircle } from "lucide-react";
 import { VisaProfile } from "../types";
 
@@ -143,9 +144,21 @@ export default function AIVisaMatcher({ lang = "ko" }: AIVisaMatcherProps) {
             <Bot className="w-3.5 h-3.5 text-blue-700 animate-pulse" />
             {activeContent.badge}
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 cursor-default"
+            animate={{ 
+              scale: [1, 1.01, 1],
+              opacity: [1, 0.6, 1]
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              delay: 0.5
+            }}
+          >
             {activeContent.titlePre} <span className="text-blue-800">{activeContent.titlePost}</span>
-          </h2>
+          </motion.h2>
           <p className="text-slate-600 text-sm sm:text-base">
             {activeContent.desc}
           </p>

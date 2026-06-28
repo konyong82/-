@@ -110,17 +110,22 @@ export default function Footer({ lang = "ko" }: FooterProps) {
           {/* Brand/Legal */}
           <div className="md:col-span-5 space-y-4 text-left">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-800 bg-[#7cb4c4] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700 bg-white flex items-center justify-center shrink-0">
                 <img 
-                  src="/src/assets/images/visa_friend_logo_1782559736095.jpg" 
+                  src="/src/assets/images/visa_friend_blue_mint_logo_1782662971714.jpg" 
                   alt="비자친구 로고" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <span className="text-lg font-black tracking-tight text-white font-sans">
-                {activeContent.brandName} <span className="text-blue-400 text-base font-medium">{activeContent.brandSub}</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="text-lg font-black tracking-tight text-white font-sans leading-tight">
+                  {activeContent.brandName} <span className="text-blue-400 text-xs font-semibold">{activeContent.brandSub}</span>
+                </span>
+                <span className="text-[8px] font-black tracking-widest text-[#2dd4bf] font-mono bg-[#111827] px-1 py-0.5 mt-0.5 rounded border border-slate-800 leading-none uppercase max-w-max">
+                  visa79
+                </span>
+              </div>
             </div>
             
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
