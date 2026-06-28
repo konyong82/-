@@ -96,7 +96,7 @@ export default function Header({
         {/* Brand Logo */}
         <div 
           onClick={() => setActiveSection("hero")} 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-2 md:gap-3 cursor-pointer group"
           id="logo-container"
         >
           <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-200 bg-white border border-slate-100 shrink-0">
@@ -107,7 +107,7 @@ export default function Header({
               referrerPolicy="no-referrer"
             />
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden md:block">
             <div className="flex items-baseline gap-1.5">
               <span className="text-base lg:text-[13px] xl:text-lg font-bold tracking-tight text-slate-800 font-sans whitespace-nowrap">
                 {activeContent.brandName}
