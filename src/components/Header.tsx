@@ -1,4 +1,5 @@
 import { Shield, Bot, HelpCircle, CheckSquare, Briefcase, FileText, Lock, Unlock } from "lucide-react";
+import logoImg from "../assets/images/visa_friend_blue_mint_logo_1782662971714.jpg";
 
 interface HeaderProps {
   activeSection: string;
@@ -101,7 +102,7 @@ export default function Header({
         >
           <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-200 bg-white border border-slate-100 shrink-0">
             <img 
-              src="/src/assets/images/visa_friend_blue_mint_logo_1782662971714.jpg" 
+              src={logoImg} 
               alt="비자친구 로고" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

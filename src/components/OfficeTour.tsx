@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { motion } from "motion/react";
 import { Briefcase, Eye, ShieldAlert, CheckCircle, MapPin, Compass, Clock, Car, Footprints, Upload, RotateCcw, Image as ImageIcon } from "lucide-react";
 
+import defaultWorkspaceImg from "../assets/images/office_workspace_edited_1782559416311.jpg";
+import defaultMeetingImg from "../assets/images/office_meeting_edited_1782559431521.jpg";
+import fallbackDeskImg from "../assets/images/office_desk_1782557779076.jpg";
+import fallbackMeetingImg from "../assets/images/office_meeting_1782557796153.jpg";
+
 interface OfficeTourProps {
   lang?: "ko" | "en" | "ja" | "zh" | "vi";
   isAdmin?: boolean;
@@ -114,12 +119,12 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
   const activeContent = trans[lang] || trans.ko;
 
   const [deskImage, setDeskImage] = useState<string>(() => {
-    return localStorage.getItem("visa_friend_office_desk") || "/src/assets/images/office_workspace_edited_1782559416311.jpg";
+    return localStorage.getItem("visa_friend_office_desk") || defaultWorkspaceImg;
   });
   const [deskFallbackUsed, setDeskFallbackUsed] = useState(false);
 
   const [meetingImage, setMeetingImage] = useState<string>(() => {
-    return localStorage.getItem("visa_friend_office_meeting") || "/src/assets/images/office_meeting_edited_1782559431521.jpg";
+    return localStorage.getItem("visa_friend_office_meeting") || defaultMeetingImg;
   });
   const [meetingFallbackUsed, setMeetingFallbackUsed] = useState(false);
 
@@ -151,14 +156,14 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
 
   const handleDeskError = () => {
     if (!deskFallbackUsed) {
-      setDeskImage("/src/assets/images/office_desk_1782557779076.jpg");
+      setDeskImage(fallbackDeskImg);
       setDeskFallbackUsed(true);
     }
   };
 
   const handleMeetingError = () => {
     if (!meetingFallbackUsed) {
-      setMeetingImage("/src/assets/images/office_meeting_1782557796153.jpg");
+      setMeetingImage(fallbackMeetingImg);
       setMeetingFallbackUsed(true);
     }
   };
@@ -203,11 +208,11 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
   const handleReset = async (type: "desk" | "meeting") => {
     if (type === "desk") {
       localStorage.removeItem("visa_friend_office_desk");
-      setDeskImage("/src/assets/images/office_workspace_edited_1782559416311.jpg");
+      setDeskImage(defaultWorkspaceImg);
       setDeskFallbackUsed(false);
     } else {
       localStorage.removeItem("visa_friend_office_meeting");
-      setMeetingImage("/src/assets/images/office_meeting_edited_1782559431521.jpg");
+      setMeetingImage(defaultMeetingImg);
       setMeetingFallbackUsed(false);
     }
 

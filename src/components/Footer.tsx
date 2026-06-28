@@ -1,4 +1,5 @@
 import { Shield, Mail, Phone, MapPin, ExternalLink, Calendar, MessageSquare } from "lucide-react";
+import logoImg from "../assets/images/visa_friend_blue_mint_logo_1782662971714.jpg";
 
 interface FooterProps {
   lang?: "ko" | "en" | "ja" | "zh" | "vi";
@@ -112,7 +113,7 @@ export default function Footer({ lang = "ko" }: FooterProps) {
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-700 bg-white flex items-center justify-center shrink-0">
                 <img 
-                  src="/src/assets/images/visa_friend_blue_mint_logo_1782662971714.jpg" 
+                  src={logoImg} 
                   alt="비자친구 로고" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
