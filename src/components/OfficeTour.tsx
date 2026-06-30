@@ -234,7 +234,6 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
       title: "행정사 집무 및 비자 처리실 (Main Workspace)",
       image: deskImage,
       onError: handleDeskError,
-      inputRef: deskInputRef,
       type: "desk" as const,
       description: "법무부 출입국 대행기관 정식 업무와 외국인 비자 심사 서류 처리가 상시 이루어지는 핵심 집무 공간입니다.",
       features: [
@@ -250,7 +249,6 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
       title: "1:1 집중 심층 상담실 (Private Consultation Lounge)",
       image: meetingImage,
       onError: handleMeetingError,
-      inputRef: meetingInputRef,
       type: "meeting" as const,
       description: "의뢰인의 민감한 권리 구제 사안(음주운전, 불법체류 사범심사 등)과 취업 연계 상담이 아늑하고 프라이빗하게 보장되는 전용 라운지입니다.",
       features: [
@@ -266,6 +264,25 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
 
   return (
     <section id="office-tour" className="py-20 bg-slate-50 border-y border-slate-200/60">
+      {/* Hidden File Upload Inputs for Admin */}
+      {isAdmin && (
+        <>
+          <input 
+            type="file" 
+            ref={deskInputRef} 
+            onChange={(e) => handleFileUpload(e, "desk")} 
+            accept="image/*" 
+            className="hidden" 
+          />
+          <input 
+            type="file" 
+            ref={meetingInputRef} 
+            onChange={(e) => handleFileUpload(e, "meeting")} 
+            accept="image/*" 
+            className="hidden" 
+          />
+        </>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Title */}
@@ -321,16 +338,14 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
                 <div className="absolute bottom-4 right-4 flex items-center gap-2">
                   {isAdmin && (
                     <>
-                      {/* File Upload Hidden Input */}
-                      <input 
-                        type="file" 
-                        ref={space.inputRef} 
-                        onChange={(e) => handleFileUpload(e, space.type)} 
-                        accept="image/*" 
-                        className="hidden" 
-                      />
                       <button 
-                        onClick={() => space.inputRef.current?.click()}
+                        onClick={() => {
+                          if (space.type === "desk") {
+                            deskInputRef.current?.click();
+                          } else {
+                            meetingInputRef.current?.click();
+                          }
+                        }}
                         className="bg-blue-600 hover:bg-blue-500 text-white backdrop-blur-sm px-3 py-1.5 rounded-xl border border-blue-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
                         title="실제 사진 업로드"
                       >
@@ -349,11 +364,6 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
                       )}
                     </>
                   )}
-                  
-                  <div className="bg-slate-900/70 backdrop-blur-sm px-2.5 py-1.5 rounded-xl border border-white/10 text-[10px] text-slate-300 font-semibold flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5" />
-                    실제 전경
-                  </div>
                 </div>
               </div>
 

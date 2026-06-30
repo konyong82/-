@@ -7,6 +7,7 @@ export interface QnAPost {
   contactInfo?: string;
   isPrivate: boolean;
   createdAt: string;
+  imageUrl?: string;
   answer?: {
     content: string;
     answeredAt: string;

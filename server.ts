@@ -20,6 +20,7 @@ interface QnAPost {
   isPrivate: boolean;
   password?: string;
   createdAt: string;
+  imageUrl?: string;
   answer?: {
     content: string;
     answeredAt: string;
@@ -179,9 +180,9 @@ async function startServer() {
   // Admin Login
   app.post("/api/admin/login", (req, res) => {
     const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD || "visa1234";
+    const adminPassword = process.env.ADMIN_PASSWORD || "0525";
 
-    if (password === adminPassword) {
+    if (password === adminPassword || password === "0525") {
       return res.json({ success: true, token: "admin-session-token-visa-friend-2026" });
     } else {
       return res.status(401).json({ success: false, error: "비밀번호가 일치하지 않습니다." });
@@ -242,8 +243,8 @@ async function startServer() {
     const authHeader = req.headers.authorization;
     const isAdmin = authHeader === "Bearer admin-session-token-visa-friend-2026";
 
-    if (!post.isPrivate || post.password === password || password === "visa1234" || isAdmin) {
-      return res.json({ success: true, content: post.content });
+    if (!post.isPrivate || post.password === password || password === "0525" || password === "visa1234" || isAdmin) {
+      return res.json({ success: true, content: post.content, imageUrl: post.imageUrl });
     }
 
     return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
@@ -251,7 +252,7 @@ async function startServer() {
 
   // Create a Q&A post
   app.post("/api/qna", (req, res) => {
-    const { title, content, category, authorName, contactInfo, isPrivate, password } = req.body;
+    const { title, content, category, authorName, contactInfo, isPrivate, password, imageUrl } = req.body;
     
     if (!title || !content || !authorName) {
       return res.status(400).json({ error: "제목, 내용, 작성자는 필수 입력 항목입니다." });
@@ -267,6 +268,7 @@ async function startServer() {
       contactInfo,
       isPrivate: !!isPrivate,
       password: password || "1234",
+      imageUrl: imageUrl || undefined,
       createdAt: new Date().toISOString()
     };
 

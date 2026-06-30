@@ -1,6 +1,6 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { motion } from "motion/react";
-import { HelpCircle, Search, MessageSquare, Lock, Unlock, Plus, AlertCircle, RefreshCw, ChevronDown, ChevronUp, CheckCircle, UserCheck, ShieldAlert } from "lucide-react";
+import { HelpCircle, Search, MessageSquare, Lock, Unlock, Plus, AlertCircle, RefreshCw, ChevronDown, ChevronUp, CheckCircle, UserCheck, ShieldAlert, Image as ImageIcon } from "lucide-react";
 import { QnAPost } from "../types";
 
 interface QnASectionProps {
@@ -96,7 +96,19 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
   const [newContact, setNewContact] = useState("");
   const [newIsPrivate, setNewIsPrivate] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const handleNewImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Admin Answer Form State
   const [replyingPostId, setReplyingPostId] = useState<string | null>(null);
@@ -181,7 +193,7 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
       if (res.ok) {
         const data = await res.json();
         // Server returns unmasked content upon valid password verification.
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: data.content, isContentMasked: false } : p));
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: data.content, imageUrl: data.imageUrl, isContentMasked: false } : p));
         setUnlockedPostIds(prev => [...prev, postId]);
         setExpandedPostIds(prev => [...prev, postId]);
         setPasswordPromptPostId(null);
@@ -213,7 +225,8 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
           authorName: newAuthor,
           contactInfo: newContact,
           isPrivate: newIsPrivate,
-          password: newIsPrivate ? newPassword || "1234" : undefined
+          password: newIsPrivate ? newPassword || "1234" : undefined,
+          imageUrl: newImageUrl || undefined
         })
       });
 
@@ -229,6 +242,7 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
           setNewContact("");
           setNewIsPrivate(false);
           setNewPassword("");
+          setNewImageUrl("");
           fetchPosts(true); // Quiet refresh
         }, 1500);
       }
@@ -482,6 +496,42 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
                     ></textarea>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">참고 사진 / 이미지 첨부 (선택)</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleNewImageUpload}
+                        className="hidden"
+                        id="qna-image-upload"
+                      />
+                      <label
+                        htmlFor="qna-image-upload"
+                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200/90 text-slate-700 text-xs font-bold rounded-lg border border-slate-200 cursor-pointer flex items-center gap-1.5 transition-colors"
+                      >
+                        <ImageIcon className="w-4 h-4 text-slate-500" />
+                        사진 선택하기
+                      </label>
+                      {newImageUrl && (
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-150 p-1.5 rounded-lg">
+                          <img
+                            src={newImageUrl}
+                            alt="첨부 이미지 프리뷰"
+                            className="w-8 h-8 object-cover rounded border border-slate-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setNewImageUrl("")}
+                            className="text-red-500 hover:text-red-700 text-xs font-bold px-1.5 py-1"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                     <button
                       type="button"
@@ -629,9 +679,24 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
                           <HelpCircle className="w-4 h-4 text-slate-400" />
                           <span>상담 질문 원문</span>
                         </div>
-                        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-white rounded-xl border border-slate-100 p-4">
-                          {post.content}
-                        </p>
+                        <div className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                            {post.content}
+                          </p>
+                          {post.imageUrl && (
+                            <div className="max-w-md border border-slate-200 rounded-lg overflow-hidden mt-3 shadow-sm bg-slate-50 p-1">
+                              <img 
+                                src={post.imageUrl} 
+                                alt="의뢰인 첨부 사진" 
+                                className="w-full max-h-[300px] object-contain rounded-md"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="p-1 px-2 text-[10px] text-slate-400 font-medium bg-white text-center border-t border-slate-100">
+                                📎 첨부된 참고 사진/문서
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Official Administrator Answer */}

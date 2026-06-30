@@ -249,9 +249,6 @@ export default function App() {
 
               <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-600 leading-relaxed">
                 행정사님만 로그인할 수 있는 공간입니다. 로그인 성공 시 <strong className="text-blue-900">성공 사례 업로드</strong>, <strong className="text-blue-900">상담실 비공개 글 즉시 열람 및 답변 등록</strong>, <strong className="text-blue-900">사무실 실제 사진 교체</strong> 권한이 활성화됩니다.
-                <div className="mt-2 text-[11px] font-semibold text-slate-500">
-                  💡 임시 비밀번호: <code className="bg-slate-200 px-1 py-0.5 rounded text-blue-900 font-bold">visa1234</code>
-                </div>
               </div>
 
               <form onSubmit={handleAdminLogin} className="space-y-4">
