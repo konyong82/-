@@ -217,61 +217,26 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
           <p className="text-slate-600 text-sm sm:text-base">
             {activeContent.desc}
           </p>
-        </div>
 
-        {/* Toolbar: Category tabs, Search, Add Case */}
-        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-10">
-          
-          {/* Tabs */}
-          <div className="flex flex-wrap gap-1.5" id="cases-tabs">
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 ${
-                  selectedCategory === cat.value
-                    ? "bg-blue-900 text-white shadow-md shadow-blue-950/10"
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Action Row */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="relative flex-1 sm:flex-initial">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="국적, 비자명 등으로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs w-full focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-              />
-            </div>
-
-            <button
-              onClick={() => fetchCases(true)}
-              disabled={isRefreshing}
-              className="p-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded-xl shrink-0 cursor-pointer transition-all"
-              title="새로고침"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-900" : ""}`} />
-            </button>
-
-            {isAdmin && (
+          {isAdmin && (
+            <div className="pt-2 flex justify-center gap-2">
               <button
                 onClick={() => setShowAddForm(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer shrink-0 transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-all"
               >
                 <Plus className="w-3.5 h-3.5" />
                 사례 등록
               </button>
-            )}
-          </div>
-
+              <button
+                onClick={() => fetchCases(true)}
+                disabled={isRefreshing}
+                className="p-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded-xl cursor-pointer transition-all"
+                title="새로고침"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-900" : ""}`} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* --- ADD CASE MODAL FORM --- */}
