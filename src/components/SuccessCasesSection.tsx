@@ -1,6 +1,6 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { motion } from "motion/react";
-import { Award, Search, Sparkles, Filter, Plus, CheckCircle2, UserCheck, RefreshCw, FileText, Globe } from "lucide-react";
+import { Award, Search, Sparkles, Filter, Plus, CheckCircle2, UserCheck, RefreshCw, FileText, Globe, Image as ImageIcon } from "lucide-react";
 import { SuccessCase } from "../types";
 
 interface SuccessCasesSectionProps {
@@ -80,8 +80,10 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
 
   const activeContent = trans[lang] || trans.ko;
 
-  // Add Success Case Form State
+  // Add/Edit Success Case Form State
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState<"visa" | "penalty" | "job">("visa");
   const [newNationality, setNewNationality] = useState("");
@@ -90,6 +92,43 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
   const [newOutcome, setNewOutcome] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const handleOpenEdit = (c: SuccessCase) => {
+    setIsEditMode(true);
+    setEditingCaseId(c.id);
+    setNewTitle(c.title);
+    setNewCategory(c.category);
+    setNewNationality(c.clientNationality);
+    setNewVisaType(c.visaType);
+    setNewDescription(c.description);
+    setNewOutcome(c.outcome);
+    setNewImageUrl(c.imageUrl || "");
+    setShowAddForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowAddForm(false);
+    setIsEditMode(false);
+    setEditingCaseId(null);
+    setNewTitle("");
+    setNewCategory("visa");
+    setNewNationality("");
+    setNewVisaType("");
+    setNewDescription("");
+    setNewOutcome("");
+    setNewImageUrl("");
+  };
+
+  const handleCaseImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Image preset options to choose from
   const imagePresets = [
@@ -137,8 +176,12 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
     try {
       const token = localStorage.getItem("visa_friend_admin_token");
       const finalImage = newImageUrl || "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=400";
-      const res = await fetch("/api/cases", {
-        method: "POST",
+      
+      const url = isEditMode && editingCaseId ? `/api/cases/${editingCaseId}` : "/api/cases";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
@@ -157,23 +200,17 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
       if (res.ok) {
         setFormSubmitted(true);
         setTimeout(() => {
+          setFormSubmitted(true);
           setFormSubmitted(false);
-          setShowAddForm(false);
-          // Clear
-          setNewTitle("");
-          setNewNationality("");
-          setNewVisaType("");
-          setNewDescription("");
-          setNewOutcome("");
-          setNewImageUrl("");
+          handleCloseForm();
           fetchCases(true); // Quiet reload
         }, 1500);
       } else {
-        alert("성공 사례 등록 권한이 없거나 실패했습니다.");
+        alert(isEditMode ? "성공 사례 수정 권한이 없거나 실패했습니다." : "성공 사례 등록 권한이 없거나 실패했습니다.");
       }
     } catch (e) {
       console.error(e);
-      alert("성공 사례 등록 실패");
+      alert(isEditMode ? "성공 사례 수정 실패" : "성공 사례 등록 실패");
     }
   };
 
@@ -249,7 +286,9 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                   <div className="w-16 h-16 rounded-full bg-green-50 text-green-600 flex items-center justify-center mx-auto shadow-md animate-bounce">
                     <CheckCircle2 className="w-10 h-10 stroke-[1.5]" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800">성공사례가 무사히 등록되었습니다!</h3>
+                  <h3 className="text-xl font-bold text-slate-800">
+                    {isEditMode ? "성공사례가 성공적으로 수정되었습니다!" : "성공사례가 무사히 등록되었습니다!"}
+                  </h3>
                   <p className="text-sm text-slate-500">웹사이트 메인 그리드에 즉시 실시간 반영됩니다.</p>
                 </div>
               ) : (
@@ -257,11 +296,11 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-sky-500 animate-pulse" />
-                      허가 성공사례 업로드 (행정사 전용)
+                      {isEditMode ? "허가 성공사례 수정 (행정사 전용)" : "허가 성공사례 업로드 (행정사 전용)"}
                     </h3>
                     <button
                       type="button"
-                      onClick={() => setShowAddForm(false)}
+                      onClick={handleCloseForm}
                       className="text-slate-400 hover:text-slate-600 text-sm font-semibold cursor-pointer"
                     >
                       닫기
@@ -340,35 +379,79 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">자료 첨부 사진 프리셋 선택 (클릭)</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {imagePresets.map((preset, pIdx) => (
-                        <button
-                          key={pIdx}
-                          type="button"
-                          onClick={() => setNewImageUrl(preset.url)}
-                          className={`p-2 border rounded-xl text-left transition-all ${
-                            newImageUrl === preset.url
-                              ? "border-blue-950 bg-blue-50/50 ring-2 ring-blue-900/15"
-                              : "border-slate-200 hover:bg-slate-50"
-                          }`}
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">실제 사진 첨부 / 또는 프리셋 선택</label>
+                    
+                    <div className="space-y-3">
+                      {/* Direct upload selector */}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCaseImageUpload}
+                          className="hidden"
+                          id="case-image-upload-file"
+                        />
+                        <label
+                          htmlFor="case-image-upload-file"
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200/90 text-slate-700 text-xs font-bold rounded-lg border border-slate-200 cursor-pointer flex items-center gap-1.5 transition-colors"
                         >
-                          <img
-                            src={preset.url}
-                            alt={preset.label}
-                            className="w-full h-12 object-cover rounded-lg mb-1 pointer-events-none"
-                            referrerPolicy="no-referrer"
-                          />
-                          <p className="text-[9px] font-bold text-slate-600 text-center">{preset.label}</p>
-                        </button>
-                      ))}
+                          <ImageIcon className="w-4 h-4 text-slate-500" />
+                          실제 사진 파일 선택
+                        </label>
+                        {newImageUrl && (
+                          <div className="flex items-center gap-2 bg-slate-50 border border-slate-150 p-1 rounded-lg">
+                            <img
+                              src={newImageUrl}
+                              alt="첨부 이미지 프리뷰"
+                              className="w-8 h-8 object-cover rounded border border-slate-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setNewImageUrl("")}
+                              className="text-red-500 hover:text-red-700 text-xs font-bold px-1.5 py-1"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative flex py-1.5 items-center">
+                        <div className="flex-grow border-t border-slate-200"></div>
+                        <span className="flex-shrink mx-4 text-[10px] text-slate-400 font-bold">또는 아래 준비된 사진 프리셋 사용</span>
+                        <div className="flex-grow border-t border-slate-200"></div>
+                      </div>
+
+                      {/* Image preset options */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {imagePresets.map((preset, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => setNewImageUrl(preset.url)}
+                            className={`p-2 border rounded-xl text-left transition-all ${
+                              newImageUrl === preset.url
+                                ? "border-blue-950 bg-blue-50/50 ring-2 ring-blue-900/15"
+                                : "border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            <img
+                              src={preset.url}
+                              alt={preset.label}
+                              className="w-full h-12 object-cover rounded-lg mb-1 pointer-events-none"
+                              referrerPolicy="no-referrer"
+                            />
+                            <p className="text-[9px] font-bold text-slate-600 text-center">{preset.label}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                     <button
                       type="button"
-                      onClick={() => setShowAddForm(false)}
+                      onClick={handleCloseForm}
                       className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg cursor-pointer"
                     >
                       취소
@@ -377,7 +460,7 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                       type="submit"
                       className="px-6 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-lg shadow-md cursor-pointer transition-colors"
                     >
-                      성공사례 승인 등록
+                      {isEditMode ? "성공사례 수정 완료" : "성공사례 승인 등록"}
                     </button>
                   </div>
                 </form>
@@ -449,11 +532,25 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                     {/* Text Details */}
                     <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-slate-400">
-                          <Globe className="w-3.5 h-3.5 text-blue-800" />
-                          <span>의뢰 국적: <span className="text-slate-700">{c.clientNationality}</span></span>
-                          <span className="text-slate-300">|</span>
-                          <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded font-mono">{c.visaType}</span>
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5 text-xs font-bold text-slate-400">
+                          <div className="flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-blue-800" />
+                            <span>의뢰 국적: <span className="text-slate-700">{c.clientNationality}</span></span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded font-mono">{c.visaType}</span>
+                          </div>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEdit(c);
+                              }}
+                              className="text-[10px] text-blue-900 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded-lg font-bold border border-slate-200 cursor-pointer transition-all shrink-0"
+                            >
+                              수정
+                            </button>
+                          )}
                         </div>
 
                         <h3 className="font-extrabold text-slate-800 text-xs sm:text-sm md:text-base mb-1 sm:mb-2 tracking-tight line-clamp-2 leading-snug">
@@ -511,11 +608,25 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
                     {/* Text Details */}
                     <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-slate-400">
-                          <Globe className="w-3.5 h-3.5 text-blue-800" />
-                          <span>의뢰 국적: <span className="text-slate-700">{c.clientNationality}</span></span>
-                          <span className="text-slate-300">|</span>
-                          <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded font-mono">{c.visaType}</span>
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5 text-xs font-bold text-slate-400">
+                          <div className="flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-blue-800" />
+                            <span>의뢰 국적: <span className="text-slate-700">{c.clientNationality}</span></span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded font-mono">{c.visaType}</span>
+                          </div>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEdit(c);
+                              }}
+                              className="text-[10px] text-blue-900 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded-lg font-bold border border-slate-200 cursor-pointer transition-all shrink-0"
+                            >
+                              수정
+                            </button>
+                          )}
                         </div>
 
                         <h3 className="font-extrabold text-slate-800 text-xs sm:text-sm md:text-base mb-1 sm:mb-2 tracking-tight line-clamp-2 leading-snug">

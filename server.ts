@@ -348,6 +348,43 @@ async function startServer() {
     res.status(201).json({ success: true, successCase: newCase });
   });
 
+  // Update a Success Case (Admin Only)
+  app.put("/api/cases/:id", (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== "Bearer admin-session-token-visa-friend-2026") {
+      return res.status(403).json({ error: "행정사 관리자 권한이 필요합니다." });
+    }
+
+    const { id } = req.params;
+    const { title, category, clientNationality, visaType, description, outcome, imageUrl } = req.body;
+
+    if (!title || !description || !visaType) {
+      return res.status(400).json({ error: "제목, 비자 종류, 내용은 필수 입력 항목입니다." });
+    }
+
+    const db = loadDB();
+    if (!db.cases) db.cases = [];
+    const index = db.cases.findIndex((c: any) => c.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: "해당 사례를 찾을 수 없습니다." });
+    }
+
+    db.cases[index] = {
+      ...db.cases[index],
+      title,
+      category: category || "visa",
+      clientNationality: clientNationality || "기타",
+      visaType,
+      description,
+      outcome: outcome || "비자 취득 완료",
+      imageUrl: imageUrl || db.cases[index].imageUrl
+    };
+
+    saveDB(db);
+    res.json({ success: true, successCase: db.cases[index] });
+  });
+
   // Get Office Tour Images
   app.get("/api/office/images", (req, res) => {
     const db = loadDB();
