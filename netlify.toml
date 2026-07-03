@@ -1,0 +1,6 @@
+Ini, TOML
+[[redirects]]
+  from = "/api/*"
+  to = "http://https://visa79.onrender.com/api/:splat"
+  status = 200
+  force = true
