@@ -611,167 +611,354 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredPosts.map((post) => {
-              const isExpanded = expandedPostIds.includes(post.id);
-              const isAnswered = !!post.answer;
-              const isPrivate = post.isPrivate && !unlockedPostIds.includes(post.id);
+          <div className="relative h-[600px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-150/10 p-4 shadow-inner" id="qna-marquee-container">
+            {/* Top & Bottom elegant fades */}
+            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-50 via-slate-50/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent z-10 pointer-events-none" />
 
-              return (
-                <div 
-                  key={post.id} 
-                  id={`qna-item-${post.id}`}
-                  className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden transition-all duration-200"
-                >
-                  {/* Collapsible Header Accordion */}
-                  <div 
-                    onClick={() => handleToggleExpand(post)}
-                    className="p-5 flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 select-none"
-                  >
-                    <div className="flex items-start sm:items-center gap-3 text-left">
-                      {/* Status badge */}
-                      {isAnswered ? (
-                        <span className="shrink-0 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
-                          답변완료
-                        </span>
-                      ) : (
-                        <span className="shrink-0 text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full animate-pulse">
-                          답변대기
-                        </span>
-                      )}
+            <style>{`
+              @keyframes qnaMarqueeUp {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(calc(-50% - 12px)); }
+              }
+              .animate-qna-marquee-up {
+                animation: qnaMarqueeUp 22s linear infinite;
+              }
+              .animate-qna-marquee-up:hover {
+                animation-play-state: paused;
+              }
+            `}</style>
 
-                      {/* Category Label */}
-                      <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded">
-                        {post.category === "visa" && "비자"}
-                        {post.category === "penalty" && "사범심사"}
-                        {post.category === "job" && "직업소개"}
-                        {post.category === "other" && "기타행정"}
-                      </span>
+            <div className="animate-qna-marquee-up flex flex-col gap-6">
+              {/* Copy 1 */}
+              <div className="flex flex-col gap-6">
+                {filteredPosts.map((post) => {
+                  const isExpanded = expandedPostIds.includes(post.id);
+                  const isAnswered = !!post.answer;
+                  const isPrivate = post.isPrivate && !unlockedPostIds.includes(post.id);
 
-                      {/* Title */}
-                      <h4 className="font-bold text-sm text-slate-800 flex items-center gap-1.5 leading-snug">
-                        {post.title}
-                        {post.isPrivate && <Lock className="w-3.5 h-3.5 text-slate-400 inline shrink-0" />}
-                      </h4>
-                    </div>
+                  return (
+                    <div 
+                      key={`${post.id}-copy1`} 
+                      id={`qna-item-${post.id}-copy1`}
+                      className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden transition-all duration-200"
+                    >
+                      {/* Collapsible Header Accordion */}
+                      <div 
+                        onClick={() => handleToggleExpand(post)}
+                        className="p-5 flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 select-none"
+                      >
+                        <div className="flex items-start sm:items-center gap-3 text-left">
+                          {/* Status badge */}
+                          {isAnswered ? (
+                            <span className="shrink-0 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
+                              답변완료
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full animate-pulse">
+                              답변대기
+                            </span>
+                          )}
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right hidden sm:block">
-                        <span className="text-xs font-semibold text-slate-600 block">{post.authorName}</span>
-                        <span className="text-[10px] text-slate-400">{new Date(post.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-slate-400" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-slate-400" />
-                      )}
-                    </div>
-                  </div>
+                          {/* Category Label */}
+                          <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded">
+                            {post.category === "visa" && "비자"}
+                            {post.category === "penalty" && "사범심사"}
+                            {post.category === "job" && "직업소개"}
+                            {post.category === "other" && "기타행정"}
+                          </span>
 
-                  {/* Accordion Body */}
-                  {isExpanded && (
-                    <div className="px-5 pb-6 pt-2 border-t border-slate-100 bg-slate-50/30 text-left space-y-5 fade-in">
-                      
-                      {/* User's Original Question content */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
-                          <HelpCircle className="w-4 h-4 text-slate-400" />
-                          <span>상담 질문 원문</span>
+                          {/* Title */}
+                          <h4 className="font-bold text-sm text-slate-800 flex items-center gap-1.5 leading-snug">
+                            {post.title}
+                            {post.isPrivate && <Lock className="w-3.5 h-3.5 text-slate-400 inline shrink-0" />}
+                          </h4>
                         </div>
-                        <div className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                            {post.content}
-                          </p>
-                          {post.imageUrl && (
-                            <div className="max-w-md border border-slate-200 rounded-lg overflow-hidden mt-3 shadow-sm bg-slate-50 p-1">
-                              <img 
-                                src={post.imageUrl} 
-                                alt="의뢰인 첨부 사진" 
-                                className="w-full max-h-[300px] object-contain rounded-md"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="p-1 px-2 text-[10px] text-slate-400 font-medium bg-white text-center border-t border-slate-100">
-                                📎 첨부된 참고 사진/문서
-                              </div>
-                            </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right hidden sm:block">
+                            <span className="text-xs font-semibold text-slate-600 block">{post.authorName}</span>
+                            <span className="text-[10px] text-slate-400">{new Date(post.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          
+                          {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-slate-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-slate-400" />
                           )}
                         </div>
                       </div>
 
-                      {/* Official Administrator Answer */}
-                      {post.answer ? (
-                        <div className="space-y-2 bg-blue-50/30 border border-blue-100/50 rounded-2xl p-5">
-                          <div className="flex items-center justify-between border-b border-blue-100/30 pb-2 mb-2">
-                            <div className="flex items-center gap-2 text-xs text-blue-900 font-extrabold">
-                              <UserCheck className="w-4 h-4 text-blue-800" />
-                              <span>{post.answer.author} (비자친구 대표 행정사) 답변</span>
+                      {/* Accordion Body */}
+                      {isExpanded && (
+                        <div className="px-5 pb-6 pt-2 border-t border-slate-100 bg-slate-50/30 text-left space-y-5 fade-in">
+                          
+                          {/* User's Original Question content */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+                              <HelpCircle className="w-4 h-4 text-slate-400" />
+                              <span>상담 질문 원문</span>
                             </div>
-                            <span className="text-[10px] text-slate-400">
-                              {new Date(post.answer.answeredAt).toLocaleDateString()} 답변등록
-                            </span>
+                            <div className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
+                              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                {post.content}
+                              </p>
+                              {post.imageUrl && (
+                                <div className="max-w-md border border-slate-200 rounded-lg overflow-hidden mt-3 shadow-sm bg-slate-50 p-1">
+                                  <img 
+                                    src={post.imageUrl} 
+                                    alt="의뢰인 첨부 사진" 
+                                    className="w-full max-h-[300px] object-contain rounded-md"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  <div className="p-1 px-2 text-[10px] text-slate-400 font-medium bg-white text-center border-t border-slate-100">
+                                    📎 첨부된 참고 사진/문서
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
-                            {post.answer.content}
-                          </p>
-                        </div>
-                      ) : isAdmin ? (
-                        /* Admin answering interface */
-                        <div className="p-4 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-3">
-                          <div className="flex items-center gap-1.5 text-xs text-blue-900 font-extrabold">
-                            <ShieldAlert className="w-4 h-4 text-blue-800" />
-                            <span>대표 행정사 마스터 관리 권한: 답변 작성</span>
-                          </div>
-                          {replyingPostId === post.id ? (
-                            <div className="space-y-2">
-                              <textarea
-                                value={adminAnswerText}
-                                onChange={(e) => setAdminAnswerText(e.target.value)}
-                                placeholder="의뢰인의 상황에 부합하는 정밀하고 따뜻한 해결책을 기입해 주십시오..."
-                                rows={4}
-                                className="w-full bg-white p-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-900 focus:outline-none"
-                              ></textarea>
-                              <div className="flex gap-2 justify-end">
-                                <button
-                                  onClick={() => {
-                                    setReplyingPostId(null);
-                                    setAdminAnswerText("");
-                                  }}
-                                  className="px-3 py-1.5 border border-slate-200 hover:bg-white text-slate-700 font-medium text-xs rounded"
-                                >
-                                  취소
-                                </button>
-                                <button
-                                  onClick={() => handleAdminAnswerSubmit(post.id)}
-                                  className="px-4 py-1.5 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded"
-                                >
-                                  답변 등록하기
-                                </button>
+
+                          {/* Official Administrator Answer */}
+                          {post.answer ? (
+                            <div className="space-y-2 bg-blue-50/30 border border-blue-100/50 rounded-2xl p-5">
+                              <div className="flex items-center justify-between border-b border-blue-100/30 pb-2 mb-2">
+                                <div className="flex items-center gap-2 text-xs text-blue-900 font-extrabold">
+                                  <UserCheck className="w-4 h-4 text-blue-800" />
+                                  <span>{post.answer.author} (비자친구 대표 행정사) 답변</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400">
+                                  {new Date(post.answer.answeredAt).toLocaleDateString()} 답변등록
+                                </span>
                               </div>
+                              <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                {post.answer.content}
+                              </p>
+                            </div>
+                          ) : isAdmin ? (
+                            /* Admin answering interface */
+                            <div className="p-4 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-3">
+                              <div className="flex items-center gap-1.5 text-xs text-blue-900 font-extrabold">
+                                <ShieldAlert className="w-4 h-4 text-blue-800" />
+                                <span>대표 행정사 마스터 관리 권한: 답변 작성</span>
+                              </div>
+                              {replyingPostId === post.id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={adminAnswerText}
+                                    onChange={(e) => setAdminAnswerText(e.target.value)}
+                                    placeholder="의뢰인의 상황에 부합하는 정밀하고 따뜻한 해결책을 기입해 주십시오..."
+                                    rows={4}
+                                    className="w-full bg-white p-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-900 focus:outline-none"
+                                  ></textarea>
+                                  <div className="flex gap-2 justify-end">
+                                    <button
+                                      onClick={() => {
+                                        setReplyingPostId(null);
+                                        setAdminAnswerText("");
+                                      }}
+                                      className="px-3 py-1.5 border border-slate-200 hover:bg-white text-slate-700 font-medium text-xs rounded"
+                                    >
+                                      취소
+                                    </button>
+                                    <button
+                                      onClick={() => handleAdminAnswerSubmit(post.id)}
+                                      className="px-4 py-1.5 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded"
+                                    >
+                                      답변 등록하기
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setReplyingPostId(post.id)}
+                                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
+                                >
+                                  대표 행정사 권한으로 즉시 답변 달기
+                                </button>
+                              )}
                             </div>
                           ) : (
-                            <button
-                              onClick={() => setReplyingPostId(post.id)}
-                              className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
-                            >
-                              대표 행정사 권한으로 즉시 답변 달기
-                            </button>
+                            /* Standard visitor view when unanswered */
+                            <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-xl flex items-center gap-2.5 text-xs text-amber-800 font-bold">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                              <span>대표 행정사의 전문 법률 검토 및 맞춤 답변이 현재 분석 중입니다. (24시간 이내 등록 완료 예정)</span>
+                            </div>
                           )}
-                        </div>
-                      ) : (
-                        /* Standard visitor view when unanswered */
-                        <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-xl flex items-center gap-2.5 text-xs text-amber-800 font-bold">
-                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                          <span>대표 행정사의 전문 법률 검토 및 맞춤 답변이 현재 분석 중입니다. (24시간 이내 등록 완료 예정)</span>
+
                         </div>
                       )}
 
                     </div>
-                  )}
+                  );
+                })}
+              </div>
 
-                </div>
-              );
-            })}
+              {/* Copy 2 */}
+              <div className="flex flex-col gap-6" aria-hidden="true">
+                {filteredPosts.map((post) => {
+                  const isExpanded = expandedPostIds.includes(post.id);
+                  const isAnswered = !!post.answer;
+                  const isPrivate = post.isPrivate && !unlockedPostIds.includes(post.id);
+
+                  return (
+                    <div 
+                      key={`${post.id}-copy2`} 
+                      id={`qna-item-${post.id}-copy2`}
+                      className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden transition-all duration-200"
+                    >
+                      {/* Collapsible Header Accordion */}
+                      <div 
+                        onClick={() => handleToggleExpand(post)}
+                        className="p-5 flex items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 select-none"
+                      >
+                        <div className="flex items-start sm:items-center gap-3 text-left">
+                          {/* Status badge */}
+                          {isAnswered ? (
+                            <span className="shrink-0 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
+                              답변완료
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full animate-pulse">
+                              답변대기
+                            </span>
+                          )}
+
+                          {/* Category Label */}
+                          <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded">
+                            {post.category === "visa" && "비자"}
+                            {post.category === "penalty" && "사범심사"}
+                            {post.category === "job" && "직업소개"}
+                            {post.category === "other" && "기타행정"}
+                          </span>
+
+                          {/* Title */}
+                          <h4 className="font-bold text-sm text-slate-800 flex items-center gap-1.5 leading-snug">
+                            {post.title}
+                            {post.isPrivate && <Lock className="w-3.5 h-3.5 text-slate-400 inline shrink-0" />}
+                          </h4>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right hidden sm:block">
+                            <span className="text-xs font-semibold text-slate-600 block">{post.authorName}</span>
+                            <span className="text-[10px] text-slate-400">{new Date(post.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          
+                          {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-slate-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Accordion Body */}
+                      {isExpanded && (
+                        <div className="px-5 pb-6 pt-2 border-t border-slate-100 bg-slate-50/30 text-left space-y-5 fade-in">
+                          
+                          {/* User's Original Question content */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+                              <HelpCircle className="w-4 h-4 text-slate-400" />
+                              <span>상담 질문 원문</span>
+                            </div>
+                            <div className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
+                              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                {post.content}
+                              </p>
+                              {post.imageUrl && (
+                                <div className="max-w-md border border-slate-200 rounded-lg overflow-hidden mt-3 shadow-sm bg-slate-50 p-1">
+                                  <img 
+                                    src={post.imageUrl} 
+                                    alt="의뢰인 첨부 사진" 
+                                    className="w-full max-h-[300px] object-contain rounded-md"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  <div className="p-1 px-2 text-[10px] text-slate-400 font-medium bg-white text-center border-t border-slate-100">
+                                    📎 첨부된 참고 사진/문서
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Official Administrator Answer */}
+                          {post.answer ? (
+                            <div className="space-y-2 bg-blue-50/30 border border-blue-100/50 rounded-2xl p-5">
+                              <div className="flex items-center justify-between border-b border-blue-100/30 pb-2 mb-2">
+                                <div className="flex items-center gap-2 text-xs text-blue-900 font-extrabold">
+                                  <UserCheck className="w-4 h-4 text-blue-800" />
+                                  <span>{post.answer.author} (비자친구 대표 행정사) 답변</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400">
+                                  {new Date(post.answer.answeredAt).toLocaleDateString()} 답변등록
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                {post.answer.content}
+                              </p>
+                            </div>
+                          ) : isAdmin ? (
+                            /* Admin answering interface */
+                            <div className="p-4 bg-blue-50/50 border border-blue-200/60 rounded-xl space-y-3">
+                              <div className="flex items-center gap-1.5 text-xs text-blue-900 font-extrabold">
+                                <ShieldAlert className="w-4 h-4 text-blue-800" />
+                                <span>대표 행정사 마스터 관리 권한: 답변 작성</span>
+                              </div>
+                              {replyingPostId === post.id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={adminAnswerText}
+                                    onChange={(e) => setAdminAnswerText(e.target.value)}
+                                    placeholder="의뢰인의 상황에 부합하는 정밀하고 따뜻한 해결책을 기입해 주십시오..."
+                                    rows={4}
+                                    className="w-full bg-white p-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-900 focus:outline-none"
+                                  ></textarea>
+                                  <div className="flex gap-2 justify-end">
+                                    <button
+                                      onClick={() => {
+                                        setReplyingPostId(null);
+                                        setAdminAnswerText("");
+                                      }}
+                                      className="px-3 py-1.5 border border-slate-200 hover:bg-white text-slate-700 font-medium text-xs rounded"
+                                    >
+                                      취소
+                                    </button>
+                                    <button
+                                      onClick={() => handleAdminAnswerSubmit(post.id)}
+                                      className="px-4 py-1.5 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded"
+                                    >
+                                      답변 등록하기
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setReplyingPostId(post.id)}
+                                  className="px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
+                                >
+                                  대표 행정사 권한으로 즉시 답변 달기
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            /* Standard visitor view when unanswered */
+                            <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-xl flex items-center gap-2.5 text-xs text-amber-800 font-bold">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                              <span>대표 행정사의 전문 법률 검토 및 맞춤 답변이 현재 분석 중입니다. (24시간 이내 등록 완료 예정)</span>
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
           </div>
         )}
 
