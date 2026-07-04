@@ -34,11 +34,18 @@
   background: #94a3b8;
 }
 
+html,
+body,
+#root,
+#visa-friend-app-root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;
   color: #1e293b;
-  overflow-x: hidden;
 }
 
 /* Custom micro-animations */
