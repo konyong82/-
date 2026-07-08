@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { motion } from "motion/react";
 import { Briefcase, Eye, ShieldAlert, CheckCircle, MapPin, Compass, Clock, Car, Footprints, Upload, RotateCcw, Image as ImageIcon } from "lucide-react";
 
-import defaultWorkspaceImg from "../assets/images/office_workspace_edited_1782559416311.jpg";
-import defaultMeetingImg from "../assets/images/office_meeting_edited_1782559431521.jpg";
+import defaultWorkspaceImg from "../assets/images/office_desk_1782557779076.jpg";
+import defaultMeetingImg from "../assets/images/office_meeting_1782557796153.jpg";
 import fallbackDeskImg from "../assets/images/office_desk_1782557779076.jpg";
 import fallbackMeetingImg from "../assets/images/office_meeting_1782557796153.jpg";
 
@@ -119,16 +119,22 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
   const activeContent = trans[lang] || trans.ko;
 
   const [deskImage, setDeskImage] = useState<string>(() => {
-    return localStorage.getItem("visa_friend_office_desk") || defaultWorkspaceImg;
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("visa_friend_office_desk") || defaultWorkspaceImg;
+    }
+    return defaultWorkspaceImg;
   });
   const [deskFallbackUsed, setDeskFallbackUsed] = useState(false);
 
   const [meetingImage, setMeetingImage] = useState<string>(() => {
-    return localStorage.getItem("visa_friend_office_meeting") || defaultMeetingImg;
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("visa_friend_office_meeting") || defaultMeetingImg;
+    }
+    return defaultMeetingImg;
   });
   const [meetingFallbackUsed, setMeetingFallbackUsed] = useState(false);
 
-  // Fetch images from server on mount
+  // Fetch custom uploaded images from server on mount to sync across all devices
   useEffect(() => {
     const fetchImages = async () => {
       try {
