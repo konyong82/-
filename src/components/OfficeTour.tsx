@@ -134,27 +134,51 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
   });
   const [meetingFallbackUsed, setMeetingFallbackUsed] = useState(false);
 
-  // Fetch custom uploaded images from server on mount to sync across all devices
+  // Sync custom uploaded images between server database (disk) and client localStorage
   useEffect(() => {
-    const fetchImages = async () => {
+    const syncImages = async () => {
       try {
         const res = await fetch("/api/office/images");
         if (res.ok) {
           const data = await res.json();
-          if (data.deskImage) {
-            setDeskImage(data.deskImage);
-            localStorage.setItem("visa_friend_office_desk", data.deskImage);
+          const serverDesk = data.deskImage;
+          const serverMeeting = data.meetingImage;
+
+          const localDesk = localStorage.getItem("visa_friend_office_desk");
+          const localMeeting = localStorage.getItem("visa_friend_office_meeting");
+
+          // Sync desk image
+          if (serverDesk) {
+            setDeskImage(serverDesk);
+            localStorage.setItem("visa_friend_office_desk", serverDesk);
+          } else if (localDesk) {
+            // Auto-upload to server if local has it but server doesn't
+            await fetch("/api/office/images", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "desk", base64: localDesk })
+            });
           }
-          if (data.meetingImage) {
-            setMeetingImage(data.meetingImage);
-            localStorage.setItem("visa_friend_office_meeting", data.meetingImage);
+
+          // Sync meeting image
+          if (serverMeeting) {
+            setMeetingImage(serverMeeting);
+            localStorage.setItem("visa_friend_office_meeting", serverMeeting);
+          } else if (localMeeting) {
+            // Auto-upload to server if local has it but server doesn't
+            await fetch("/api/office/images", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "meeting", base64: localMeeting })
+            });
           }
         }
       } catch (err) {
-        console.error("Error loading remote office images:", err);
+        console.error("Error syncing office images with server:", err);
       }
     };
-    fetchImages();
+
+    syncImages();
   }, []);
 
   const deskInputRef = useRef<HTMLInputElement>(null);
