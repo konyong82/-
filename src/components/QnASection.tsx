@@ -131,7 +131,7 @@ export default function QnASection({ lang = "ko", isAdmin = false }: QnASectionP
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      const res = await fetch("/api/qna", { headers });
+      const res = await fetch(`/api/qna?t=${Date.now()}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setPosts(data);

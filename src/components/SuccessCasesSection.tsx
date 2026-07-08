@@ -149,7 +149,7 @@ export default function SuccessCasesSection({ lang = "ko", isAdmin = false }: Su
     if (!quiet) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const res = await fetch("/api/cases");
+      const res = await fetch(`/api/cases?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setCases(data);

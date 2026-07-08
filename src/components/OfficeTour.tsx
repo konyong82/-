@@ -138,7 +138,7 @@ export default function OfficeTour({ lang = "ko", isAdmin = false }: OfficeTourP
   useEffect(() => {
     const syncImages = async () => {
       try {
-        const res = await fetch("/api/office/images");
+        const res = await fetch(`/api/office/images?t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
           const serverDesk = data.deskImage;

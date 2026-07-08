@@ -205,6 +205,7 @@ async function startServer() {
 
   // Fetch all Q&A
   app.get("/api/qna", (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const db = loadDB();
     const authHeader = req.headers.authorization;
     const isAdmin = authHeader === "Bearer admin-session-token-visa-friend-2026";
@@ -311,6 +312,7 @@ async function startServer() {
 
   // Fetch Success Cases
   app.get("/api/cases", (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const db = loadDB();
     res.json(db.cases || []);
   });
@@ -387,6 +389,7 @@ async function startServer() {
 
   // Get Office Tour Images
   app.get("/api/office/images", (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const db = loadDB();
     res.json(db.office || { deskImage: "", meetingImage: "" });
   });
